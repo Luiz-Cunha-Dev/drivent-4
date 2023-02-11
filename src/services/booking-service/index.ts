@@ -3,7 +3,6 @@ import bookingRepository from "@/repositories/booking-repository";
 async function getBooking(userId: number) {
 
   const booking = await bookingRepository.findBooking(userId);
-
   
   if(!booking){
     throw {name: "NotFoundError"}
@@ -19,37 +18,37 @@ async function postBooking(userId: number, roomId: number) {
   const userBooking = await bookingRepository.findUserBooking(userId);
 
   if(userBooking){
-    throw {name: "FORBIDDEN"}
+    throw {name: "FORBIDDEN", message: "booking alredy exist"}
   }
 
   const enrollment = await bookingRepository.findEnrollment(userId)
 
   if(!enrollment){
-    throw {name: "UNAUTHORIZED"}
+    throw {name: "FORBIDDEN", message: "no enrollment"}
   }
 
   const ticket = await bookingRepository.findTicket(enrollment.id)
 
   if(!ticket || ticket.status === "RESERVED"){
-    throw {name: "PAYMENT_REQUIRED"}
+    throw {name: "FORBIDDEN", message: "no ticket or ticket not paid"}
   }
 
   const ticketType = await bookingRepository.findTicketType(ticket.ticketTypeId)
 
   if(ticketType.isRemote === true || ticketType.includesHotel === false){
-    throw {name: "UNAUTHORIZED"}
+    throw {name: "FORBIDDEN", message: "ticket type without hotel include"}
   }
 
   const room = await bookingRepository.findRoom(roomId);
 
   if(!room){
-    throw {name: "NotFoundError"}
+    throw {name: "NotFoundError", message: "no room"}
   }
 
   const booking = await bookingRepository.findBookings(room.id);
 
   if(room.capacity === booking.length){
-    throw {name: "FORBIDDEN"}
+    throw {name: "FORBIDDEN", message: "full room"}
   }
 
   const bookingCreated = await bookingRepository.createBooking(userId, roomId);
